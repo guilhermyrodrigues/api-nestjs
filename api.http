@@ -1,0 +1,25 @@
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "name": "newuser",
+  "email": "user@user.com",
+  "password": "password123",
+  "role": "ADMIN"
+}
+
+###
+GET http://localhost:3000/users
+
+###
+GET http://localhost:3000/users/cmbxuvavb0004v11c5b0434pe
+
+###
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "user@user.com",
+  "password": "password123"
+}
+
