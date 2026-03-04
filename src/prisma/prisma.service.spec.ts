@@ -1,3 +1,9 @@
+jest.mock('@prisma/client', () => ({
+  PrismaClient: class {
+    $connect = jest.fn().mockResolvedValue(undefined);
+  },
+}));
+
 import { Test, TestingModule } from '@nestjs/testing';
 import { PrismaService } from './prisma.service';
 
@@ -14,5 +20,13 @@ describe('PrismaService', () => {
 
   it('should be defined', () => {
     expect(service).toBeDefined();
+  });
+
+  it('should connect on module init', async () => {
+    const connectSpy = jest.spyOn(service, '$connect');
+
+    await service.onModuleInit();
+
+    expect(connectSpy).toHaveBeenCalled();
   });
 });

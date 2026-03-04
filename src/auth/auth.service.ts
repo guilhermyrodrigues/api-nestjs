@@ -1,37 +1,60 @@
-import { Injectable } from '@nestjs/common';
-import { LoginDto } from './login.dto';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcrypt';
 import { PrismaService } from 'src/prisma/prisma.service';
-import bcrypt from 'bcrypt';
+import { LoginDto } from './login.dto';
 
 @Injectable()
 export class AuthService {
-    constructor(private jwtService: JwtService, private prismaService: PrismaService) {
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly prismaService: PrismaService,
+  ) {}
 
+  private validateLoginInput(loginDto: LoginDto) {
+    const isEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+      loginDto.email || '',
+    );
+
+    if (!isEmailValid) {
+      throw new BadRequestException('E-mail inválido.');
     }
 
-    async login(loginDto: LoginDto) {
-        const user = await this.prismaService.user.findUnique({
-            where: {email: loginDto.email},
+    if (!loginDto.password || loginDto.password.length < 8) {
+      throw new BadRequestException('Senha inválida.');
+    }
+  }
+
+  async login(loginDto: LoginDto) {
+    this.validateLoginInput(loginDto);
+    const user = await this.prismaService.user.findUnique({
+      where: { email: loginDto.email },
     });
 
-    if(!user) {
-        throw new Error('Invalid Credentials');
+    if (!user) {
+      throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    const isPasswordValid = bcrypt.compareSync(
-        loginDto.password,
-        user.password,
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.password,
     );
 
     if (!isPasswordValid) {
-        throw new Error('Invalid Credentials');
+      throw new UnauthorizedException('Credenciais inválidas.');
     }
 
-    const token = this.jwtService.sign({
-        name: user.name,
-        email: user.email,
+    const token = await this.jwtService.signAsync({
+      sub: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
     });
 
     return { access_token: token };
-}}
+  }
+}

@@ -1,10 +1,8 @@
-import { Role } from "@prisma/client";
+export type UserRole = 'READER' | 'WRITER' | 'ADMIN' | 'EDITOR';
 
 export class CreateUserDto {
-    name: string;
-    email: string;
-    password: string;
-    role: Role;
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
 }
-
-
